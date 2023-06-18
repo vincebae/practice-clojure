@@ -193,11 +193,3 @@
    {:actual (get-results "가나 다라  마바사\n" [:bytes :words :chars :lines])
      ;; order should be lines words chars and bytes.
     :expect [1 3 11 25]}))
-
-(deftest get-result-text-tests
-  (testing-is-equal
-   "get-result-text-tests"
-   {:actual (get-result-text [1] "filename")
-    :expect "1 filename"}
-   {:actual (get-result-text [1 2 3] "filename")
-    :expect "1 2 3 filename"}))

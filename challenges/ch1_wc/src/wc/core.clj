@@ -6,6 +6,7 @@
 
 (ns wc.core
   (:require
+   [clojure.java.io :as io]
    [clojure.string :as s]))
 
 (defn make-vector
@@ -48,7 +49,7 @@
    "-w" :words "--words" :words,
    "-l" :lines "--lines" :lines})
 
-(def default-opts [:lines :words :chars])
+(def default-opts [:lines :words :bytes])
 (def all-opts [:lines :words :chars :bytes])
 
 (defn parse-args
@@ -77,28 +78,21 @@
     (-> (map counts show-opts-ordered)
         (make-vector))))
 
-(defn get-result-text
-  [results filename]
-  (s/join " " (conj results filename)))
-
-(defn read-file-to-text
-  [filename]
-  (try
-    {:result (slurp filename)}
-    (catch Exception e
-      {:error (.getMessage e)})))
-
-(defn wc-by-filename
-  [filename show-opts]
-  (let* [read-result (read-file-to-text filename)
-         text (:result read-result)]
-        (if text
-          (get-result-text (get-results text show-opts) filename)
-          (:error read-result))))
+(defn wc-by-reader
+  [reader show-opts]
+  (->> (slurp reader)
+       (#(get-results % show-opts))
+       (s/join " ")))
 
 (defn -main
   [args]
   (let* [arg-map (parse-args args)
          show-opts (get arg-map :show default-opts)]
-        (doseq [filename (:filename arg-map)]
-          (println (wc-by-filename filename show-opts)))))
+        (if (:filename arg-map)
+          (doseq [filename (:filename arg-map)]
+            (try
+              (with-open [file-reader (io/reader filename)]
+                (println (wc-by-reader file-reader show-opts) filename))
+              (catch Exception e
+                (println (.getMessage e)))))
+          (println (wc-by-reader *in* show-opts)))))
