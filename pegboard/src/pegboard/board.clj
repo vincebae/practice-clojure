@@ -3,94 +3,108 @@
 (ns pegboard.board
   (:gen-class))
 
-(def max-rows 10)
-
 (def num-pegs
   (memoize
    (fn [num-rows]
      (/ (* num-rows (inc num-rows)) 2))))
 
-(def pegs
-  ((fn [num-rows]
-     (loop [peg-num (num-pegs num-rows) row num-rows column num-rows acc {}]
-       (if (= peg-num 0)
-         acc
-         (recur
-          (dec peg-num) ; peg-num
-          (if (= column 1) (dec row) row) ; row
-          (if (= column 1) (dec row) (dec column)) ; column
-          (assoc acc peg-num [row column] [row column] peg-num))))) ; acc
-   max-rows))
+(def peg-row
+  (memoize
+   (fn [peg-num]
+     (loop [row 1]
+       (if (<= peg-num (num-pegs row))
+         row
+         (recur (inc row)))))))
 
-(defn peg-row [peg-num] (nth (pegs peg-num) 0))
+(def peg-column
+  (memoize
+   (fn [peg-num]
+     (loop [row 1 remaining peg-num]
+       (if (<= peg-num (num-pegs row))
+         remaining
+         (recur (inc row) (- remaining row)))))))
 
-(defn peg-column [peg-num] (nth (pegs peg-num) 1))
-
-(defn find-peg [row column] (pegs [row column]))
+(def find-peg
+  (memoize
+   (fn [row column]
+     (if (or (< row 1) (< column 1) (> column row))
+       nil
+       (+ (num-pegs (dec row)) column)))))
 
 (def peg-up-left
   (memoize
    (fn [peg-num]
      (when (boolean peg-num)
-       (pegs [(dec (peg-row peg-num)) (dec (peg-column peg-num))])))))
+       (find-peg (dec (peg-row peg-num)) (dec (peg-column peg-num)))))))
 
 (def peg-up-right
   (memoize
    (fn [peg-num]
      (when (boolean peg-num)
-       (pegs [(dec (peg-row peg-num)) (peg-column peg-num)])))))
-
+       (find-peg (dec (peg-row peg-num)) (peg-column peg-num))))))
 
 (def peg-left
   (memoize
    (fn [peg-num]
      (when (boolean peg-num)
-       (pegs [(peg-row peg-num) (dec (peg-column peg-num))])))))
+       (find-peg (peg-row peg-num) (dec (peg-column peg-num)))))))
 
 (def peg-right
   (memoize
    (fn [peg-num]
      (when (boolean peg-num)
-       (pegs [(peg-row peg-num) (inc (peg-column peg-num))])))))
+       (find-peg (peg-row peg-num) (inc (peg-column peg-num)))))))
 
 (def peg-down-left
   (memoize
    (fn [peg-num num-rows]
      (when (boolean peg-num)
        (let [row (inc (peg-row peg-num)) column (peg-column peg-num)]
-         (if (> row num-rows) nil (pegs [row column])))))))
+         (if (> row num-rows) nil (find-peg row column)))))))
 
 (def peg-down-right
   (memoize
    (fn [peg-num num-rows]
      (when (boolean peg-num)
        (let [row (inc (peg-row peg-num)) column (inc (peg-column peg-num))]
-         (if (> row num-rows) nil (pegs [row column])))))))
+         (if (> row num-rows) nil (find-peg row column)))))))
 
-(defn create-connection
-  [peg-num num-rows]
-  (let
-   [total-pegs (num-pegs num-rows) row (peg-row peg-num) column (peg-column peg-num)]
+(def find-connection
+  (memoize
+   (fn [neighbor-fn peg-num]
+     (let* [neighbor (neighbor-fn peg-num) connection (neighbor-fn neighbor)]
+           (and neighbor connection [neighbor connection])))))
 
-    ""))
+(def find-connections
+  (memoize
+   (fn [peg-num num-rows]
+     (let [neighbor-funs [peg-up-left
+                          peg-up-right
+                          peg-left
+                          peg-right
+                          #(peg-down-right % num-rows)
+                          #(peg-down-left % num-rows)]]
+       (filter boolean (map #(find-connection % peg-num) neighbor-funs))))))
 
-(defn create-peg
-  [peg-num num-rows]
-  (vector
-   peg-num
-   {:row (peg-row peg-num)
-    :column (peg-column peg-num)
-    :pegged true
-    :connections (create-connection peg-num num-rows)}))
+(def create-peg
+  (memoize
+   (fn [peg-num num-rows]
+     {:row (peg-row peg-num)
+      :column (peg-column peg-num)
+      :pegged true
+      :connections (into {} (find-connections peg-num num-rows))})))
 
-;;
-;; (defn create-pegs
-;;   [num-rows]
-;;   (loop [pegs {} start 1 columns 1]
-;;     (if (<= num-rows columns)
-;;       (map #(assoc pegs % create-peg(% )
-;;       pegs)))
-;;
+(def create-pegs
+  (memoize
+   (fn [num-rows]
+     (loop [pegs {} peg-num 1]
+       (if (> peg-num (num-pegs num-rows))
+         pegs
+         (recur (assoc pegs peg-num (create-peg peg-num num-rows)) (inc peg-num)))))))
+
+(println (str (create-pegs 5)))
+(println (map #(str % "\n") (create-pegs 5)))
+
 ;;
 ;;
 ;;

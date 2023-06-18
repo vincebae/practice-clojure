@@ -1,3 +1,3 @@
-#!/usr/bin/env bb
+#!/usr/bin/env -S clojure -M
 
 (println "Hello World!")
