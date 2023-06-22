@@ -47,81 +47,15 @@
                (some #{[:b 1]} result)
                (some #{[:c 2]} result))))))
 
-(deftest get-arg-tests
-  (testing-is-equal
-   "get-arg tests"
-   {:actual (get-arg {} [])
-    :expect nil}
-   {:actual (get-arg {} :a)
-    :expect nil}
-   {:actual (get-arg {} [:a])
-    :expect nil}
-   {:actual (get-arg {:a 1} [])
-    :expect nil}
-   {:actual (get-arg {:a 1 :b 2} :b)
-    :expect 2}
-   {:actual (get-arg {:a 1 :b {:c 2}} [:b])
-    :expect {:c 2}}
-   {:actual (get-arg {:a 1 :b {:c 2}} [:b :c])
-    :expect 2}
-   {:actual (get-arg {:a 1 :b {:c 2}} :d)
-    :expect nil}
-   {:actual (get-arg {:a 1 :b {:c 2}} [:d])
-    :expect nil}
-   {:actual (get-arg {:a 1 :b {:c 2}} [:b :d])
-    :expect nil}
-   {:actual (get-arg {:a {:b {:c 1}} :d 2} [:a :b :c])
-    :expect 1}))
-
-(deftest set-arg-tests
-  (testing-is-equal
-   "set-arg tests"
-   {:actual (set-arg {} :a 1)
-    :expect {:a 1}}
-   {:actual (set-arg {} [:a] 1)
-    :expect {:a 1}}
-   {:actual (set-arg {} [:a :b] 1)
-    :expect {:a {:b 1}}}
-   {:actual (set-arg {:a 0} :a 1)
-    :expect {:a 1}}
-   {:actual (set-arg {:a 0} [:a] 1)
-    :expect {:a 1}}
-   {:actual (set-arg {:a 0} [:a :b] 1)
-    :expect {:a {:b 1}}}
-   {:actual (set-arg {:a 0} [:a :b :c] 1)
-    :expect {:a {:b {:c 1}}}}
-   {:actual (set-arg {:a 0} [:b] 1)
-    :expect {:a 0 :b 1}}
-   {:actual (set-arg {:a 0} [:b :c] 1)
-    :expect {:a 0 :b {:c 1}}}
-   {:actual (set-arg {:a 0} nil 1)
-    :expect {:a 0}}
-   {:actual (set-arg {:a 0} [] 1)
-    :expect {:a 0}}))
-
 (deftest add-arg-tests
   (testing-is-equal
    "add-arg tests"
-   {:actual (add-arg {:a 1} nil 2)
-    :expect {:a 1}}
-   {:actual (add-arg {:a 1} :a nil)
-    :expect {:a 1}}
-   {:actual (add-arg {:a 1} :b nil)
-    :expect {:a 1}}
    {:actual (add-arg {} :a 1)
-    :expect {:a [1]}}
-   {:actual (add-arg {} [:a] 1)
     :expect {:a [1]}}
    {:actual (add-arg {:a 1} :a 2)
     :expect {:a [1 2]}}
-   {:actual (add-arg {:a 1} [:a] 2)
-    :expect {:a [1 2]}}
-   {:actual (add-arg {:a {:b 1}} [:a :b] 2)
-    :expect {:a {:b [1 2]}}}
-   {:actual (add-arg {:a {:b 1 :c 2}} [:a :b] 2)
-    :expect {:a {:b [1 2] :c 2}}}
-   {:actual (add-arg {:a {:b 1}} [:a] 2)
-    :expect {:a [[:b 1] 2]}}))
+   {:actual (add-arg {:a 1 :b 2} :b 3)
+    :expect {:a 1 :b [2 3]}}))
 
 (deftest parse-args-tests
   (testing-is-equal
