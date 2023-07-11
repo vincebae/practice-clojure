@@ -1,3 +1,9 @@
-#!/usr/bin/env -S clojure -M
+#!/usr/bin/env bb
 
-(println "Hello World!")
+(ns helloworld)
+
+(defn say-hello
+  []
+  (println "Hello World!"))
+
+(say-hello)
